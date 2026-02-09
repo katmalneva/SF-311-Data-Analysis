@@ -1,0 +1,9 @@
+[project]
+name = "sf-311-data-analysis"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pymongo[srv]>=4.16.0",
+]
