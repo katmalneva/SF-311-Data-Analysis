@@ -67,7 +67,7 @@ def update_database(collection: mongo.collection, documents: dict) -> list:
                 if result.upserted_id:
                     docs_upserted += 1
                     upserted_ids.append(result.upserted_id)
-                if docs_matched or docs_updated or docs_upserted % 100:
+                if docs_matched or docs_updated or docs_upserted:
                     print(f'existing documents matched: {docs_matched}\n'
                           f'existing documents updated: {docs_updated}\n'
                           f'new documents created: {docs_upserted}')
@@ -130,7 +130,11 @@ if __name__ == '__main__':
     new_documents = call_311(date, api_to_historic_dict)
     print(f'new documents collected')
 
+    #for now, for times sake, we will only process a few documents
+    #func updated above as well to print more often than %100
+    new_documents_truncated = new_documents[:50]
+
     print(f'Beginning to update database (this will take some time)')
-    update_database(collection, new_documents)
+    update_database(collection, new_documents_truncated)
 
     update_gcs(bucket_name, service_acct)
