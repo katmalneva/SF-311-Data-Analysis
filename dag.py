@@ -12,14 +12,9 @@ with DAG(
     catchup=False
 ) as dag:
     
-    extract = BashOperator(
+    extract_load = BashOperator(
         task_id="extract_load",
-        bash_command=f"python {DAG_DIR}/extract.py"
-    )
-
-    load = BashOperator(
-        task_id="load",
-        bash_command=f"python {DAG_DIR}/load.py"
+        bash_command=f"python {DAG_DIR}/api/api_311.py"
     )
 
     aggregate = BashOperator(
@@ -34,12 +29,12 @@ with DAG(
 
     feature_eng = BashOperator(
         task_id="feature_eng",
-        bash_command=f"python {DAG_DIR}/feature_transform_cloud.py"
+        bash_command=f"python {DAG_DIR}/spark/feature_transform_cloud.py"
     )
 
     train = BashOperator(
         task_id="train",
-        bash_command=f"python {DAG_DIR}/train_model_cloud.py"
+        bash_command=f"python {DAG_DIR}/spark/train_model_cloud.py"
     )
 
-    extract >> load >> [aggregate, map_aggregate] >> feature_eng >> train
+    extract_load >> [aggregate, map_aggregate] >> feature_eng >> train
