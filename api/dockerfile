@@ -1,0 +1,5 @@
+FROM --platform=linux/amd64 continuumio/miniconda3
+WORKDIR /api
+COPY * .
+RUN conda env create -f environment.yaml -n api_env
+CMD ["conda", "run", "--no-capture-output", "-n", "api_env", "python", "api_311.py"]

@@ -1,0 +1,14 @@
+name: api_env
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.11
+  - requests
+  - pandas
+  - pymongo
+  - python-dotenv
+  - pip
+  - pip:
+      - google-cloud-storage
