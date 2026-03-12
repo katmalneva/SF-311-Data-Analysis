@@ -32,7 +32,7 @@ def make_df(ss, desired_date):
     .option("database", "311_DataBase") \
     .option("collection", "historic_data") \
     .load()
-    filtered_df = df.select('Opened', 'Latitude', 'Longitude', 'Category', 'Neighborhood')\
+    filtered_df = df.select('Opened','Closed', 'Latitude', 'Longitude', 'Category', 'Neighborhood')\
 	.filter(F.col('Opened').contains(desired_date))
     filtered_df.show()
 
@@ -54,7 +54,7 @@ def make_map(df):
             fill=True,
             fill_opacity=0.7,
             popup=folium.Popup(
-                f"<b>{row['Category']}</b><br>{row['Neighborhood']}<br>{row['Opened']}",
+                f"<b>{row['Category']}</b><br>{row['Neighborhood']}<br>{row['Opened']}<br>{row['Closed']}",
                 max_width=200
             )
         ).add_to(m)
