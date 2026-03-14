@@ -59,7 +59,7 @@ def load_parquet(spark, path):
     return spark.read.parquet(path)
 
 
-def resolution_time(spark):
+def resolution_time_cat(spark):
     return spark.sql("""
         SELECT Category,
                ROUND(AVG(datediff(Closed, Opened)), 1) AS avg_days_to_close,
@@ -87,40 +87,53 @@ def cases_by_neighborhood(spark):
 
 
 def monthly_case_counts(spark):
-    """Total cases opened per month, most recent first."""
     return spark.sql("""
-        SELECT YEAR(Opened)  AS year,
-               MONTH(Opened) AS month,
+        SELECT month, ROUND(AVG(total_cases), 1) AS avg_cases
+        FROM (
+            SELECT YEAR(Opened) AS year,
+                   MONTH(Opened) AS month,
+                   COUNT(CaseID) AS total_cases
+            FROM cases
+            WHERE Opened IS NOT NULL
+            GROUP BY YEAR(Opened), MONTH(Opened)
+        )
+        GROUP BY month
+        ORDER BY avg_cases DESC
+    """)
+    
+def resolution_time_by_neighborhood(spark):
+    return spark.sql("""
+        SELECT Neighborhood,
+               ROUND(AVG(datediff(Closed, Opened)), 1) AS avg_days_to_close,
                COUNT(CaseID) AS total_cases
         FROM cases
-        WHERE Opened IS NOT NULL
-        GROUP BY YEAR(Opened), MONTH(Opened)
-        ORDER BY year DESC, month DESC
+        WHERE Neighborhood IS NOT NULL
+        GROUP BY Neighborhood
+        ORDER BY avg_days_to_close DESC
     """)
 
 
 if __name__ == "__main__":
     print("Creating DataFrame from MongoDB...")
     df = create_df(spark, DB_NAME, COLLECTION_NAME)
-    df.cache()
-    df.count()
-    save_parquet(df, LOCAL_PARQUET)
     df = load_parquet(spark, LOCAL_PARQUET)
     df.createOrReplaceTempView("cases")
 
     print("\n--- Resolution Time by Category ---")
-    res_df = resolution_time(spark)
+    res_df = resolution_time_cat(spark)
     res_df.show(10, False)
     save_parquet(res_df, f"{LOCAL_AGGS}/resolution_time/")
 
     print("\n--- Cases by Neighborhood ---")
     nbr_df = cases_by_neighborhood(spark)
     nbr_df.show(10, False)
-    save_parquet(nbr_df, f"{LOCAL_AGGS}/cases_by_neighborhood/")
 
-    print("\n--- Monthly Case Counts ---")
+    print("\n--- Average Monthly Case Counts ---")
     monthly_df = monthly_case_counts(spark)
     monthly_df.show(24, False)
-    save_parquet(monthly_df, f"{LOCAL_AGGS}/monthly_case_counts/")
+    
+    print("\n--- Resolution Time by Neighborhood ---")
+    res_neighborhood = resolution_time_by_neighborhood(spark)
+    res_neighborhood.show(10, False)
 
     spark.stop()
